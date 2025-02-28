@@ -1,6 +1,6 @@
 ---
-title: インポート
-description: Astroでさまざまな種類のコンテンツをインポートする方法を説明します。
+title: インポート リファレンス
+description: さまざまな種類のファイルをAstroプロジェクトにインポートする方法をご紹介します。
 i18nReady: true
 ---
 import RecipeLinks from "~/components/RecipeLinks.astro";
@@ -23,12 +23,21 @@ Astroは、標準で以下のファイル形式をサポートしています。
 - CSS Modules（`.module.css`）
 - イメージとアセット（`.svg`、`.jpg`、`.png`など）
 
-さらに、Astroを拡張して、React、Svelte、Vueコンポーネントなど、さまざまな[UIフレームワーク](/ja/guides/framework-components/)のサポートを追加できます。また、[Astro MDXインテグレーション](/ja/guides/integrations-guide/mdx/)をインストールし、プロジェクトで`.mdx`ファイルを使用することもできます。
+さらに、Astroを拡張して、React、Svelte、Vueコンポーネントなど、さまざまな[UIフレームワーク](/ja/guides/framework-components/)のサポートを追加できます。また、[Astro MDXインテグレーション](/ja/guides/integrations-guide/mdx/) や [Astro Markdocインテグレーション](/ja/guides/integrations-guide/markdoc/) をインストールして、プロジェクトで `.mdx` や `.mdoc` ファイルを使用することもできます。
 
 ### `public/`内のファイル
 
-プロジェクトの[`public/`ディレクトリ](/ja/basics/project-structure/#public)には、任意の静的アセットを置けます。Astroはそれをそのまま最終ビルドとして直接コピーします。HTMLテンプレートの中では、`public/`内のファイルをURLパスで直接参照できます。
+プロジェクトの [`public/` ディレクトリ](/ja/basics/project-structure/#public) には、任意の静的アセットを置けます。Astro はそれをそのまま最終ビルドにコピーします。 `public/`ファイルはAstroによってビルドもバンドルもされません。
 
+`public/` ファイルをHTMLテンプレート内でURLパスを使用して直接参照することができます。
+
+```astro
+// public/reports/annual/2024.pdfへのリンク
+<a href="/reports/annual/2024.pdf">2024年の年次報告書PDF</a>をダウンロードする。
+
+// /public/assets/cats/ginger.jpg を表示する。
+<img src="/assets/cats/ginger.jpg" alt="ベッドの上で眠るオレンジ色の猫。">
+```
 
 ## Import構文
 
@@ -57,7 +66,7 @@ import { getUser } from './user';
 import type { UserType } from './user';
 ```
 
-Astroには、[TypeScript](https://www.typescriptlang.org/)のサポートが組み込まれています。Astroプロジェクトで`.ts`や `.tsx`ファイルを直接インポートしたり、[Astroのコンポーネントスクリプト](/ja/basics/astro-components/#コンポーネントスクリプト)や [巻き上げられたscriptタグ](/ja/guides/client-side-scripts/)の中で直接TypeScriptコードを書けます。
+Astroには、[TypeScript](https://www.typescriptlang.org/)のサポートが組み込まれています。Astroプロジェクトで`.ts`や `.tsx`ファイルを直接インポートしたり、[Astroのコンポーネントスクリプト](/ja/basics/astro-components/#コンポーネントスクリプト)や [scriptタグ](/ja/guides/client-side-scripts/)の中で直接TypeScriptコードを記述することもできます。
 
 **Astroは、型チェックを自ら行うことはありません**。型チェックは、IDEや別のスクリプトなど、Astroの外部で行う必要があります。Astroファイルの型チェックには、[`astro check`](/ja/reference/cli-reference/#astro-check)コマンドが用意されています。
 
@@ -153,7 +162,7 @@ import txtReference from './words.txt'; // txt === '/src/words.txt'
 アクセシビリティの観点から、`<img>`タグに**altテキスト**を付加することが推奨されています！画像要素に`alt="役に立つ説明"`属性を追加することを忘れないでください。画像が単なる装飾である場合は、この属性を空で指定します。
 :::
 
-## importエイリアス
+## エイリアス
 
 **エイリアス**は、インポートのためのショートカットを作成する方法です。
 
@@ -197,16 +206,17 @@ import logoUrl from '@assets/logo.png?url';
 
 これらのエイリアスは、[VS Code](https://code.visualstudio.com/docs/languages/jsconfig)や他のエディタにも自動的に統合されます。
 
-## `Astro.glob()`
+## `import.meta.glob()`
 
-[`Astro.glob()`](/ja/reference/api-reference/#astroglob)は、多数のファイルを一度にインポートするための方法です。
+[Viteの`import.meta.glob()`](https://vite.dev/guide/features.html#glob-のインポート)は、一致するファイルパスを見つけるためにglobパターンを使用して一度に多くのファイルをインポートする方法です。
 
-`Astro.glob()`は、インポートしたいローカルファイルと一致する相対[globパターン](/ja/guides/imports/#globパターン)を1つのパラメータとして受け取るだけです。これは非同期で、マッチした各ファイルのエクスポートを配列で返します。
+`import.meta.glob()`は、インポートしたいローカルファイルと一致する相対[globパターン](#globパターン)を1つのパラメータとして受け取るだけです。これは非同期で、マッチした各ファイルのエクスポートを配列で返します。  
 
-```astro title="src/components/my-component.astro"
+```astro title="src/components/my-component.astro" {3,4}
 ---
 // `./src/pages/post/`の`.md`で終わるすべてのファイルをインポート
-const posts = await Astro.glob('../pages/post/*.md'); 
+const matches = import.meta.glob('../pages/post/*.md', { eager: true });
+const posts = Object.values(matches);
 ---
 <!-- ブログ投稿の最初の5つの<article>をレンダリング -->
 <div>
@@ -220,12 +230,12 @@ const posts = await Astro.glob('../pages/post/*.md');
 </div>
 ```
 
-`Astro.glob`を使用してインポートされたAstroコンポーネントは、[`AstroInstance`](/ja/reference/api-reference/#astro-files)型です。各コンポーネントのインスタンスは、その`default`プロパティを使用してレンダリングできます。
+`import.meta.glob`を使用してインポートされたAstroコンポーネントは、[`AstroInstance`](#astro-files)型です。 各コンポーネントインスタンスは `default` プロパティを使用してレンダリングできます。
 
 ```astro title="src/pages/component-library.astro" {8}
 ---
 // `./src/components/`の`.astro`で終わるすべてのファイルをインポート
-const components = await Astro.glob('../components/*.astro');
+const components = Object.values(import.meta.glob('../components/*.astro', { eager: true }));
 ---
 <!-- すべてのコンポーネントを表示 -->
 {components.map((component) => (
@@ -233,6 +243,98 @@ const components = await Astro.glob('../components/*.astro');
     <component.default size={24} />
   </div>
 ))}
+```
+
+### Supported Values
+
+Vite's `import.meta.glob()` function only supports static string literals. It does not support dynamic variables and string interpolation.
+
+A common workaround is to instead import a larger set of files that includes all the files you need, then filter them:
+
+```astro {6-7}
+---
+// src/components/featured.astro
+const { postSlug } = Astro.props;
+const pathToMyFeaturedPost = `src/pages/blog/${postSlug}.md`;
+
+const posts = Object.values(import.meta.glob("../pages/blog/*.md", { eager: true }));
+const myFeaturedPost = posts.find(post => post.file.includes(pathToMyFeaturedPost));
+---
+
+<p>
+  Take a look at my favorite post, <a href={myFeaturedPost.url}>{myFeaturedPost.frontmatter.title}</a>!
+</p>
+```
+
+### Import type utilities
+
+#### Markdown files
+
+Markdown files loaded with `import.meta.glob()` return the following `MarkdownInstance` interface:
+
+```ts
+export interface MarkdownInstance<T extends Record<string, any>> {
+  /* Any data specified in this file's YAML/TOML frontmatter */
+	frontmatter: T;
+  /* The absolute file path of this file */
+	file: string;
+  /* The rendered path of this file */
+	url: string | undefined;
+  /* Astro Component that renders the contents of this file */
+	Content: AstroComponentFactory;
+  /** (Markdown only) Raw Markdown file content, excluding layout HTML and YAML/TOML frontmatter */
+	rawContent(): string;
+  /** (Markdown only) Markdown file compiled to HTML, excluding layout HTML */
+	compiledContent(): string;
+  /* Function that returns an array of the h1...h6 elements in this file */
+	getHeadings(): Promise<{ depth: number; slug: string; text: string }[]>;
+	default: AstroComponentFactory;
+}
+```
+
+You can optionally provide a type for the `frontmatter` variable using a TypeScript generic.
+
+```astro
+---
+import type { MarkdownInstance } from 'astro';
+interface Frontmatter {
+    title: string;
+    description?: string;
+}
+
+const posts = Object.values(import.meta.glob<MarkdownInstance<Frontmatter>>('./posts/**/*.md', { eager: true }));
+---
+
+<ul>
+  {posts.map(post => <li>{post.frontmatter.title}</li>)}
+</ul>
+```
+
+#### Astro files
+
+Astro files have the following interface:
+
+```ts
+export interface AstroInstance {
+  /* The file path of this file */
+  file: string;
+  /* The URL for this file (if it is in the pages directory) */
+	url: string | undefined;
+	default: AstroComponentFactory;
+}
+```
+
+#### Other files
+
+Other files may have various different interfaces, but `import.meta.glob()` accepts a TypeScript generic if you know exactly what an unrecognized file type contains.
+
+```ts
+---
+interface CustomDataFile {
+  default: Record<string, any>;
+}
+const data = import.meta.glob<CustomDataFile>('../data/**/*.js');
+---
 ```
 
 ### globパターン
@@ -243,7 +345,7 @@ globパターンは、特殊なワイルドカード文字をサポートする�
 
 #### Astroのglobパターン
 
-`Astro.glob()`で使用する場合、globパターンは文字列リテラルである必要があり、変数を含むことはできません。回避策については、[トラブルシューティングガイド](/ja/guides/troubleshooting/#astroglob---no-matches-found一致するものはありません)を参照してください。
+`import.meta.glob()`で使用する場合、globパターンは文字列リテラルである必要があり、変数を含むことはできません。
 
 また、グロブパターンは、以下のいずれかで始まる必要があります。
 - `./` （カレントディレクトリで起動する）
@@ -252,9 +354,9 @@ globパターンは、特殊なワイルドカード文字をサポートする�
 
 [globパターンの構文について、詳しくはこちらをご覧ください](https://github.com/mrmlnc/fast-glob#pattern-syntax)。
 
-#### `Astro.glob()`と`getCollection()`
+### `import.meta.glob()` vs `getCollection()`
 
-[コンテンツコレクション](/ja/guides/content-collections/)は、`Astro.glob()`の代わりに複数のファイルを読み込むための[`getCollection()` API](/ja/reference/modules/astro-content/#getcollection)を提供します。コンテンツファイル（Markdown、MDX、Markdocなど）が`src/content/`ディレクトリ内のコレクションに配置されている場合、`getCollection()`を使用して[コレクションのクエリ](/ja/guides/content-collections/#コレクションのクエリ)を行い、コンテンツのエントリーを返します。
+[コンテンツコレクション](/ja/guides/content-collections/) は、`import.meta.glob()` の代わりに複数のファイルを読み込むための [`getCollection()` API](/ja/reference/modules/astro-content/#getcollection) を提供しています。コンテンツファイル(Markdown、MDX、Markdocなど)が `src/content/` ディレクトリ内のコレクションに配置されている場合は、`getCollection()` を使用して[コレクションを照会](/ja/guides/content-collections/#コレクションのクエリ)を行い、コンテンツのエントリーを返します。
 
 ## WASM
 
